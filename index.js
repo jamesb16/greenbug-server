@@ -1,31 +1,34 @@
-const express = require("express");
-const bodyParser = require("body-parser");
+import express from "express";
+import bodyParser from "body-parser";
+import twilio from "twilio";
 
 const app = express();
 
-// Twilio sends data as form-encoded
+// IMPORTANT: Railway uses process.env.PORT
+const PORT = process.env.PORT || 3000;
+
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-// Health check (browser test)
+// Root test route
 app.get("/", (req, res) => {
-  res.send("Server is running ✅");
+  res.send("Server is running");
 });
 
-// 👉 THIS IS THE ENDPOINT 👈
+// Twilio voice webhook
 app.post("/voice", (req, res) => {
-  res.set("Content-Type", "text/xml");
+  const twiml = new twilio.twiml.VoiceResponse();
 
-  res.send(`
-    <Response>
-      <Say voice="alice">
-        Hello. This is a test call from Greenbug Energy.
-      </Say>
-    </Response>
-  `);
+  twiml.say(
+    { voice: "alice", language: "en-GB" },
+    "Hello. This is your Trade Desk AI test call. Your server is working."
+  );
+
+  res.type("text/xml");
+  res.send(twiml.toString());
 });
 
-// Railway provides PORT automatically
-const port = process.env.PORT || 3000;
-app.listen(port, "0.0.0.0", () => {
-  console.log("Listening on port", port);
+// THIS IS THE MOST IMPORTANT LINE
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
